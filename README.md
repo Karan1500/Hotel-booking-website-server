@@ -1,1 +1,1 @@
-# Hotel-booking-website-client
+# Hotel-Booking-Website-MERN
