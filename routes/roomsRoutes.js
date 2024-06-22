@@ -1,9 +1,9 @@
 const express = require("express");
 const router = express.Router();
-
+const {protect} = require('../middleware/Authmiddleware')
 const Room = require("../models/room");
 
-router.get("/getAllRooms", async(req, res) => {
+router.get("/getAllRooms",protect,async(req, res) => {
 
     try {
         const rooms = await Room.find({});
@@ -13,7 +13,7 @@ router.get("/getAllRooms", async(req, res) => {
     }
 });
 
-router.post("/getroombyid", async(req, res) => {
+router.post("/getroombyid",protect,async(req, res) => {
 
     const roomid = req.body.roomid;
 
@@ -25,7 +25,7 @@ router.post("/getroombyid", async(req, res) => {
     }
 });
 
-router.post("/addroom", async(req, res) => {
+router.post("/addroom",protect,async(req, res) => {
 
     const newroom = new Room(req.body);
 

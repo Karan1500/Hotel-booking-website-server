@@ -5,10 +5,12 @@ const userRouter = require('./routes/userRoute')
 const roomsRoute = require("./routes/roomsRoutes")
 const bookingsRoute = require("./routes/bookingsRoute")
 const cors = require('cors')
+const dotenv = require('dotenv');
 const config = require('./config/config.env')
 const Razorpay = require('razorpay')
 const paymentRoute = require('./routes/paymentRoute')
 
+dotenv.config();
 var instance = new Razorpay({ key_id: "rzp_test_p4HuA905NOORxZ", key_secret: "7Z04VSqi0YkJnhTj8JSbyeFp" })
 
 const port = process.env.PORT || 5000;

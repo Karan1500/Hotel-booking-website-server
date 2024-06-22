@@ -1,49 +1,55 @@
 const express = require('express')
 const router = express.Router()
-const bookingModel = require('../models/Booking')
+const book = require('../models/Booking')
 const roomModel = require('../models/room')
 const moment = require('moment')
+const {protect} = require('../middleware/Authmiddleware')
 
-router.post('/bookroom',async (req,res) => {
-    const {room,userid,fromDate,toDate,totalAmount,totalDays} = req.body
-    
+router.post('/bookroom',protect,async (req,res) => {
+    const {roomname,roomid,userid,fromDate,toDate,totalAmount,totalDays} = req.body
+    console.log(req.body)
     try {
-        const newBooking = new bookingModel({
-            room: room.name,
-            roomid: room._id,
+        const newBooking = await book.create({
+            room: roomname,
+            roomid: roomid,
             userid,
             fromDate: fromDate,
             toDate: toDate,
-            totalAmount,
             totalDays,
-            transactionId: '1234'    
+            totalAmount,
+            transactionId: '1234',
+            status:'booked'
         })    
-        const booking = await newBooking.save()
-        const roomtemp = await roomModel.findOne({_id: room._id})
-        roomtemp.currentBookings.push({bookingid: booking._id, fromDate: fromDate,toDate: toDate,userid: userid,status: booking.status})
-        
+        // const booking = await newBooking.save()
+        console.log(newBooking)
+        const roomtemp = await roomModel.findOne({_id: roomid})
+        console.log(roomtemp);
+        roomtemp.currentBookings.push({bookingid: newBooking._id, fromDate: fromDate,toDate: toDate,userid: userid,status: newBooking.status})
+        // await tempcurbookings.save()
+        // roomtemp.currentBookings=tempcurbookings
         await roomtemp.save()
-        
+        console.log(roomtemp)
         res.send('Room booked successfully')
     } catch (error) {
         return res.status(400).json({error})
     }
 })
 
-router.post('/getbookingsbyuserid',async(req,res) => {
+router.post('/getbookingsbyuserid',protect,async(req,res) => {
     const userid = req.body.userid
+    console.log(userid)
     try {
-        const bookings = await bookingModel.find({userid:userid})
+        const bookings = await book.find({userid:userid})
         res.send(bookings)
     } catch (error) {
         return res.status(400).json({error})
     }
 })
 
-router.post('/cancelbooking',async(req,res) => {
+router.post('/cancelbooking',protect,async(req,res) => {
     const {bookingid,roomid}=req.body
     try {
-        const booking = await bookingModel.findOne({_id:bookingid})
+        const booking = await book.findOne({_id:bookingid})
         booking.status='cancelled'
         await booking.save()
         const room = await roomModel.findOne({_id:roomid})
@@ -58,9 +64,9 @@ router.post('/cancelbooking',async(req,res) => {
     }
 })
 
-router.get('/getAllBookings',async(req,res) => {
+router.get('/getAllBookings',protect,async(req,res) => {
     try {
-        const booking = await bookingModel.find()
+        const booking = await book.find()
         res.send(booking)
     } catch (error) {
         return res.status(400).json({error})

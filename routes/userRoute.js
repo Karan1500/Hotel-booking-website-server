@@ -1,13 +1,67 @@
 const express =require('express')
 const router = express.Router();
+const jwt = require('jsonwebtoken')
+const bcrypt = require('bcryptjs')
 const User = require('../models/User')
+const asyncHandler = require('express-async-handler');
+const {protect} = require('../middleware/Authmiddleware')
+// const generateToken = require('../utils/generatejwt')
+// require 'dotenv'
+
+// const generateWebToken = asyncHandler(async (id) => {
+//     // return jwt.sign({id},process.env.JWT_SECRET,{
+//     //     expiresIn:'30d'
+//     // })
+//     console.log(process.env.JWT_SECRET)
+//     return jwt.sign({ id }, process.env.JWT_SECRET, {
+//         expiresIn: '30d'
+//     })
+//     // console.log(token)
+
+//     // return token;
+// })
+
+const generateToken = (id) => {
+    // console.log(process.env.JWT_SECRET)
+    return jwt.sign({ id }, process.env.JWT_SECRET, {
+        expiresIn: '30d'
+    })
+    // console.log()
+
+}
 
 router.post('/register', async(req,res) => {
-    const newUser = new User(req.body)
+    const {name,email,password,cpassword} = req.body
+    if(!name || !email || !password || !cpassword)
+    {
+        res.status(400)
+        throw new Error('Please add all fields')  
+    }
+    const userExists = await User.findOne({email})
+    if(userExists)
+    {
+        res.status(400)
+        throw new Error('User already exists')    
+    }
+
+    const salt = await bcrypt.genSalt(10)
+    const hashedPassword = await bcrypt.hash(password,salt)
+    const newUser = await User.create({
+        name,
+        email,
+        password: hashedPassword,
+    })
 
     try {
         const user = await newUser.save()
-        res.send('User registered succesfully')
+        
+        res.status(201).json({
+            name: user.name,
+            email: user.email,
+            token: generateToken(user._id),
+            password: user.password
+        })
+        // res.send('User registered succesfully')
     } catch (error) {
         return res.status(400).json({error})
     }
@@ -15,17 +69,30 @@ router.post('/register', async(req,res) => {
 
 router.post('/login', async(req,res) => {
     const {email,password} = req.body
-
+    console.log('k');
     try {
-        const user = await User.findOne({email:email, password: password})
-        if(user){
-            const temp ={
+        const user = await User.findOne({email:email})
+        console.log(user)
+        const token=await generateToken(user._id);
+        console.log(token);
+        if(user && (await bcrypt.compare(password,user.password))){
+            console.log('s');
+            
+            // const temp ={
+            //     name: user.name,
+            //     email: user.email,
+            //     isAdmin: user.isAdmin,
+            //     _id: user._id
+            // }
+            
+            res.status(201).json({
                 name: user.name,
+                id: user._id,
                 email: user.email,
                 isAdmin: user.isAdmin,
-                _id: user._id
-            }
-            res.send(temp)
+                token : token
+            })
+            // res.send(temp)
         }
         else{
             res.status(400).json({message: 'Login failed'})
@@ -35,7 +102,7 @@ router.post('/login', async(req,res) => {
     }
 })
 
-router.get('/getAllUsers',async (req,res) => {
+router.get('/getAllUsers',protect,async (req,res) => {
     try {
         const result = await User.find();
         res.send(result);
@@ -43,5 +110,7 @@ router.get('/getAllUsers',async (req,res) => {
         return res.status(400).json({error})
     }
 })
+
+
 
 module.exports = router
