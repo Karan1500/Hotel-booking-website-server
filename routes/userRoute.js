@@ -5,29 +5,11 @@ const bcrypt = require('bcryptjs')
 const User = require('../models/User')
 const asyncHandler = require('express-async-handler');
 const {protect} = require('../middleware/Authmiddleware')
-// const generateToken = require('../utils/generatejwt')
-// require 'dotenv'
-
-// const generateWebToken = asyncHandler(async (id) => {
-//     // return jwt.sign({id},process.env.JWT_SECRET,{
-//     //     expiresIn:'30d'
-//     // })
-//     console.log(process.env.JWT_SECRET)
-//     return jwt.sign({ id }, process.env.JWT_SECRET, {
-//         expiresIn: '30d'
-//     })
-//     // console.log(token)
-
-//     // return token;
-// })
 
 const generateToken = (id) => {
-    // console.log(process.env.JWT_SECRET)
     return jwt.sign({ id }, process.env.JWT_SECRET, {
-        expiresIn: '30d'
+        expiresIn: '2h'
     })
-    // console.log()
-
 }
 
 router.post('/register', async(req,res) => {
@@ -61,7 +43,6 @@ router.post('/register', async(req,res) => {
             token: generateToken(user._id),
             password: user.password
         })
-        // res.send('User registered succesfully')
     } catch (error) {
         return res.status(400).json({error})
     }
@@ -78,13 +59,6 @@ router.post('/login', async(req,res) => {
         if(user && (await bcrypt.compare(password,user.password))){
             console.log('s');
             
-            // const temp ={
-            //     name: user.name,
-            //     email: user.email,
-            //     isAdmin: user.isAdmin,
-            //     _id: user._id
-            // }
-            
             res.status(201).json({
                 name: user.name,
                 id: user._id,
@@ -92,7 +66,6 @@ router.post('/login', async(req,res) => {
                 isAdmin: user.isAdmin,
                 token : token
             })
-            // res.send(temp)
         }
         else{
             res.status(400).json({message: 'Login failed'})
@@ -110,7 +83,5 @@ router.get('/getAllUsers',protect,async (req,res) => {
         return res.status(400).json({error})
     }
 })
-
-
 
 module.exports = router
