@@ -25,6 +25,7 @@ router.post('/bookroom',protect,async (req,res) => {
         const roomtemp = await roomModel.findOne({_id: roomid})
         console.log(roomtemp);
         roomtemp.currentBookings.push({bookingid: newBooking._id, fromDate: fromDate,toDate: toDate,userid: userid,status: newBooking.status})
+        roomtemp.count=roomtemp.count-1
         // await tempcurbookings.save()
         // roomtemp.currentBookings=tempcurbookings
         await roomtemp.save()
@@ -68,6 +69,19 @@ router.get('/getAllBookings',protect,async(req,res) => {
     try {
         const booking = await book.find()
         res.send(booking)
+    } catch (error) {
+        return res.status(400).json({error})
+    }
+})
+
+router.post('/ratebooking', protect, async(req, res) => {
+    try {
+        const {bookingid, rating} = req.body
+        const booking = await book.findOne({_id:bookingid})
+        const room = await roomModel.findOne({_id:booking.roomid})
+        room.rating.push(rating)
+        await room.save()
+        res.send('Your rating has been submitted successfully')
     } catch (error) {
         return res.status(400).json({error})
     }

@@ -27,6 +27,11 @@ const roomSchema = mongoose.Schema({
     description:{
         type: String,
         required: true
+    },
+    rating:[],
+    count:{
+        type: Number,
+        required: true
     }
 
 },{
